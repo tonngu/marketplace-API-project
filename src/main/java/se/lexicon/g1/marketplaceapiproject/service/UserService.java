@@ -9,7 +9,6 @@ import se.lexicon.g1.marketplaceapiproject.domain.entity.DTO.UserDTOForm;
 import se.lexicon.g1.marketplaceapiproject.domain.entity.User;
 import se.lexicon.g1.marketplaceapiproject.repository.AdvertisementRepository;
 import se.lexicon.g1.marketplaceapiproject.repository.UserRepository;
-import se.lexicon.g1.marketplaceapiproject.util.CustomPasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,13 +18,11 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final AdvertisementRepository advertisementRepository;
-    private final CustomPasswordEncoder customPasswordEncoder;
 
     @Autowired
-    public UserService(UserRepository userRepository, AdvertisementRepository advertisementRepository, CustomPasswordEncoder customPasswordEncoder) {
+    public UserService(UserRepository userRepository, AdvertisementRepository advertisementRepository) {
         this.userRepository = userRepository;
         this.advertisementRepository = advertisementRepository;
-        this.customPasswordEncoder = customPasswordEncoder;
     }
 
     @Transactional
@@ -35,13 +32,17 @@ public class UserService {
         User user;
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
-            if (!customPasswordEncoder.matches(userDTOForm.getPassword(), user.getPassword())) {
+            if (!user.getPassword().equals(userDTOForm.getPassword())) {
                 throw new IllegalArgumentException("Invalid password.");
             }
         } else {
             user = User.builder()
                     .email(userDTOForm.getEmail())
-                    .password(customPasswordEncoder.encode(userDTOForm.getPassword()))
+                    .password(userDTOForm.getPassword())
+                    //TODO: Add password hashing later if have time
+                    //TODO: trying to implement the password encoder using Spring Security adds some kind of security mode
+                    //TODO: which I don't understand how to deal with and it stops any kind of request from Postman to the API
+                    //TODO: so we'll do without password hashing for now
                     .build();
             user = userRepository.save(user);
         }
@@ -60,7 +61,7 @@ public class UserService {
         User user = userRepository.findByEmail(userDTOForm.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
 
-        if (!customPasswordEncoder.matches(userDTOForm.getPassword(), user.getPassword())) {
+        if (!user.getPassword().equals(userDTOForm.getPassword())) {
             throw new IllegalArgumentException("Invalid email or password.");
         }
         List<Advertisement> advertisements = advertisementRepository.findByUser_Id(user.getId());
