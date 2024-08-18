@@ -1,5 +1,6 @@
 package se.lexicon.g1.marketplaceapiproject.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,12 +26,14 @@ public class UserController {
         this.userService = userService;
     }
 
+    @Operation(description ="Enter both email and password to post an advertisement, registers a new user with the entered password if email doesn't exist inside database yet")
     @PostMapping("/register")
     public ResponseEntity<String> registerUserAndAd(@RequestBody @Valid RegistrationRequest request) {
         userService.registerUserAndAd(request.getUserDTOForm(), request.getAdvertisementDTOForm());
         return ResponseEntity.ok("User and advertisement registered successfully.");
     }
 
+    @Operation(description = "Enter both email and password to see a user's posted advertisements")
     @PostMapping("/user_ads")
     public ResponseEntity<List<AdvertisementDTOForm>> getUserAdvertisements(@RequestBody UserDTOForm userDTOForm) {
         List<AdvertisementDTOForm> advertisements = userService.getUserAdvertisements(userDTOForm);
